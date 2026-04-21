@@ -52,7 +52,7 @@ return Number.isFinite(v) ? (v as number) : Date.now();
 
 }
 
-export function dedupeEvents(events: ProviderEvent[]): CleanEvent[] {
+function dedupeEvents(events: ProviderEvent[]): CleanEvent[] {
 
 const recipientMap = new Map();
 
@@ -72,13 +72,11 @@ for (let i = 0; i < events.length; i++) {
 
    if (recipientMap.has(recipientKey)) {
 
-   const prevOcurrence = recipientMap.get(recipientKey)
+const prevOcurrence = recipientMap.get(recipientKey)
 
-    if (currentEvent.ts < prevOcurrence.ts) {
-
-       recipientMap[recipientKey] = currentEvent
-
-    } 
+if (currentEvent.ts > prevOcurrence.ts) {
+    recipientMap.set(recipientKey, currentEvent);
+}
 
     } else {
 
@@ -88,6 +86,21 @@ for (let i = 0; i < events.length; i++) {
 
 }
 
-return Object.values(recipientMap).sort((a,b) => b.ts - a.ts)
+return Array.from(recipientMap.values()).sort((a, b) => b.ts - a.ts);
 
 }
+
+const input: ProviderEvent[] = [
+
+{ messageId: "m1", type: "DELIVERED", recipient: "a@x.com", ts: 1000 },
+
+{ messageId: "m1", type: "delivered", recipient: "a@x.com", ts: 900 }, // duplicate, earlier
+
+{ messageId: "m2", type: "opened", recipient: "b@x.com", ts: 1100 },
+
+{ messageId: "m2", type: "opened", recipient: "b@x.com", ts: 1200 }, // duplicate, later
+
+];
+
+
+console.log(dedupeEvents(input))
